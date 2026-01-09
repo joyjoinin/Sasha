@@ -247,7 +247,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-300">Loading invoice data...</p>
+          <p className="text-slate-300">读取数据中...</p>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ export default function Dashboard() {
               className="text-xl font-bold"
               style={{ fontFamily: "Poppins, sans-serif" }}
             >
-              Invoice Dashboard
+              发票面板
             </h1>
           </div>
 
@@ -275,7 +275,7 @@ export default function Dashboard() {
             className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 flex items-center gap-2"
           >
             <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span className="hidden sm:inline">退出</span>
           </Button>
         </div>
       </header>
@@ -287,7 +287,7 @@ export default function Dashboard() {
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-500 text-sm mb-1">Total Invoices</p>
+                  <p className="text-slate-500 text-sm mb-1">发票总数</p>
                   <p className="text-3xl font-bold">{stats.totalInvoices}</p>
                 </div>
                 <FileText className="w-10 h-10 text-cyan-400/30" />
@@ -297,7 +297,7 @@ export default function Dashboard() {
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-500 text-sm mb-1">Total Amount</p>
+                  <p className="text-slate-500 text-sm mb-1">总金额</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(stats.totalAmount)}
                   </p>
@@ -306,7 +306,7 @@ export default function Dashboard() {
               </div>
             </Card>
 
-            <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
+            {/* <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-sm mb-1">Average Amount</p>
@@ -316,12 +316,12 @@ export default function Dashboard() {
                 </div>
                 <TrendingUp className="w-10 h-10 text-blue-400/30" />
               </div>
-            </Card>
+            </Card> */}
 
             <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-500 text-sm mb-1">Companies</p>
+                  <p className="text-slate-500 text-sm mb-1">公司数量</p>
                   <p className="text-3xl font-bold">{stats.companyCount}</p>
                 </div>
                 <Building2 className="w-10 h-10 text-purple-400/30" />
@@ -336,7 +336,7 @@ export default function Dashboard() {
                 className="text-2xl font-bold"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Search & Filter
+                搜索和筛选
               </h2>
               {hasActiveFilters && (
                 <Button
@@ -344,7 +344,7 @@ export default function Dashboard() {
                   className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2 text-sm"
                 >
                   <X className="w-4 h-4" />
-                  Clear Filters
+                  清除筛选
                 </Button>
               )}
             </div>
@@ -354,7 +354,7 @@ export default function Dashboard() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none" />
                 <Input
                   type="text"
-                  placeholder="Search by invoice number, company, or product..."
+                  placeholder="按发票号码、公司或产品搜索..."
                   value={searchKeyword}
                   onChange={e => setSearchKeyword(e.target.value)}
                   className="pl-12 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-cyan-500 focus:ring-cyan-500/20 transition-all duration-300 h-12"
@@ -370,7 +370,7 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <Search className="w-4 h-4 mr-2" />
-                    <span className="hidden sm:inline">Search</span>
+                    <span className="hidden sm:inline">搜索</span>
                   </>
                 )}
               </Button>
@@ -380,7 +380,7 @@ export default function Dashboard() {
                 className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
-                <span className="hidden sm:inline">Filters</span>
+                <span className="hidden sm:inline">筛选</span>
               </Button>
             </form>
 
@@ -391,14 +391,14 @@ export default function Dashboard() {
                   {/* Company Filter */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Company
+                      公司
                     </label>
                     <select
                       value={selectedCompany}
                       onChange={e => setSelectedCompany(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
                     >
-                      <option value="">All Companies</option>
+                      <option value=""> 所有公司</option>
                       {uniqueCompanies.map(company => (
                         <option key={company} value={company}>
                           {company}
@@ -410,7 +410,7 @@ export default function Dashboard() {
                   {/* Date Range - Start */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Start Date
+                      起始日期
                     </label>
                     <Input
                       type="date"
@@ -425,7 +425,7 @@ export default function Dashboard() {
                   {/* Date Range - End */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
-                      End Date
+                      截止日期
                     </label>
                     <Input
                       type="date"
@@ -480,7 +480,7 @@ export default function Dashboard() {
               <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur h-full">
                 <div className="p-6">
                   <h3 className="text-lg font-bold mb-4">
-                    Results ({filteredData.length})
+                    结果 ({filteredData.length})
                   </h3>
 
                   {filteredData.length === 0 ? (
@@ -544,13 +544,11 @@ export default function Dashboard() {
                     </div>
 
                     <div className="space-y-4">
-                      {/* Invoice Number */}
+                      {/* 发票号 */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">
-                            Invoice Number
-                          </p>
+                          <p className="text-xs text-slate-500 mb-1">发票号</p>
                           <p className="text-sm font-medium break-all">
                             {selectedItem.发票号}
                           </p>
@@ -561,7 +559,9 @@ export default function Dashboard() {
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <Building2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">Issuer</p>
+                          <p className="text-xs text-slate-500 mb-1">
+                            开票公司
+                          </p>
                           <p className="text-sm font-medium">
                             {selectedItem.开票公司}
                           </p>
@@ -573,7 +573,7 @@ export default function Dashboard() {
                         <Building2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-xs text-slate-500 mb-1">
-                            Recipient
+                            收票公司
                           </p>
                           <p className="text-sm font-medium">
                             {selectedItem.收票公司}
@@ -585,9 +585,7 @@ export default function Dashboard() {
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">
-                            Invoice Date
-                          </p>
+                          <p className="text-xs text-slate-500 mb-1">时间</p>
                           <p className="text-sm font-medium">
                             {formatDate(selectedItem.时间)}
                           </p>
@@ -598,7 +596,9 @@ export default function Dashboard() {
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">Product</p>
+                          <p className="text-xs text-slate-500 mb-1">
+                            产品名称
+                          </p>
                           <p className="text-sm font-medium">
                             {selectedItem.产品名称}
                           </p>
@@ -614,21 +614,19 @@ export default function Dashboard() {
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs text-slate-500 mb-1">
-                            Quantity
-                          </p>
+                          <p className="text-xs text-slate-500 mb-1">数量</p>
                           <p className="text-sm font-medium">
                             {selectedItem.数量}
                           </p>
                         </div>
                       </div>
 
-                      {/* Total Amount */}
+                      {/* 总金额 */}
                       <div className="flex items-start gap-4 bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
                         <JapaneseYen className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-xs text-slate-500 mb-1">
-                            Total Amount (Tax Included)
+                            含税总价
                           </p>
                           <p className="text-lg font-bold text-cyan-400">
                             {formatCurrency(selectedItem.含税总价)}
@@ -640,14 +638,14 @@ export default function Dashboard() {
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-8 pt-6 border-t border-slate-700/50">
                       <Button className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold">
-                        Download
+                        下载
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         className="flex-1 bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/50"
                       >
-                        Print
-                      </Button>
+                        打印
+                      </Button> */}
                     </div>
                   </div>
                 </Card>
@@ -655,9 +653,9 @@ export default function Dashboard() {
                 <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur h-full flex items-center justify-center min-h-96">
                   <div className="text-center">
                     <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-400 mb-2">No invoice selected</p>
+                    <p className="text-slate-400 mb-2">未选择任何发票</p>
                     <p className="text-slate-500 text-sm">
-                      Search for invoices and click on a result to view details
+                      搜索发票，点击搜索结果查看详情
                     </p>
                   </div>
                 </Card>
