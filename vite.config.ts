@@ -8,7 +8,7 @@ import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 const plugins = [react(), tailwindcss(), vitePluginManusRuntime()];
 
 export default defineConfig({
-  // base: "/Sasha/",
+  base: "/Sasha/",
   plugins,
   resolve: {
     alias: {
