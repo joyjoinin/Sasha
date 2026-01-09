@@ -68,7 +68,9 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch("/invoice_data.json");
+        const response = await fetch(
+          `${import.meta.env.BASE_URL}invoice_data.json`
+        );
         const data = await response.json();
         setInvoiceData(data);
         setIsLoading(false);
