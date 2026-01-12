@@ -378,7 +378,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto mb-4" />
           <p className="text-slate-300">读取数据中...</p>
@@ -388,12 +388,12 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-linear-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <h1
@@ -979,14 +979,14 @@ export default function Dashboard() {
                         className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                       >
                         <td className="px-4 py-3 font-medium">{item.发票号}</td>
-                        <td className="px-4 py-3 max-w-[200px] break-words">
+                        <td className="px-4 py-3 max-w-50 wrap-break-word">
                           {item.开票公司}
                         </td>
-                        <td className="px-4 py-3 max-w-[200px] break-words">
+                        <td className="px-4 py-3 max-w-50 wrap-break-word">
                           {item.收票公司}
                         </td>
                         <td className="px-4 py-3">{item.时间}</td>
-                        <td className="px-4 py-3 max-w-[250px] break-words">
+                        <td className="px-4 py-3 max-w-62.5 wrap-break-word">
                           {item.产品名称}
                         </td>
                         {/* <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
