@@ -13,11 +13,12 @@ import {
   X,
   JapaneseYen,
   Upload,
+  Download,
 } from "lucide-react";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-
+import axios from "axios";
 /**
  * Dashboard - Invoice Data Search, Aggregation and Filtering Page
  * Design Philosophy: Modern Minimalist with Glassmorphism
@@ -66,6 +67,10 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // File download state
+  const [isDownloading, setIsDownloading] = useState(false);
+  const filedownloadRef = useRef<HTMLInputElement>(null);
+
   // Category filter states
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [selectedBillingCompany, setSelectedBillingCompany] =
@@ -78,8 +83,12 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch("/invoice_data.json");
-        const data = await response.json();
+        // const response = await fetch("/invoice_data.json");
+        // const data = await response.json();
+        const response = await axios.get(`http://localhost:5000/all_invoices`, {
+          responseType: "json",
+        });
+        const data = response.data.data;
         setInvoiceData(data);
         setIsLoading(false);
       } catch (error) {
@@ -91,6 +100,10 @@ export default function Dashboard() {
 
     loadData();
   }, []);
+
+  // 分页相关状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10; // 每页最多显示10条
 
   // Get unique companies for filter dropdown
   const uniqueCompanies = useMemo(() => {
@@ -171,6 +184,8 @@ export default function Dashboard() {
         }
       }
 
+      setCurrentPage(1);
+
       return true;
     });
   }, [
@@ -183,6 +198,21 @@ export default function Dashboard() {
     dateRange,
     priceRange,
   ]);
+
+  // 计算总页数
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // 计算当前页需要展示的数据
+  const currentData = filteredData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // 切换页码
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
 
   // Calculate aggregation statistics
   const stats: AggregationStats = useMemo(() => {
@@ -341,7 +371,10 @@ export default function Dashboard() {
     dateRange.start ||
     dateRange.end ||
     priceRange.min ||
-    priceRange.max;
+    priceRange.max ||
+    selectedBillingCompany ||
+    selectedInvoiceCompany ||
+    selectedProduct;
 
   if (isLoading) {
     return (
@@ -381,6 +414,18 @@ export default function Dashboard() {
             />
             <Button
               onClick={() => fileInputRef.current?.click()}
+              disabled={isDownloading}
+              className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
+            >
+              {isDownloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">上传表格</span>
+            </Button>
+            <Button
+              onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
             >
@@ -389,14 +434,14 @@ export default function Dashboard() {
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">Upload Excel</span>
+              <span className="hidden sm:inline">下载表格</span>
             </Button>
             <Button
               onClick={handleLogout}
               className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">退出</span>
             </Button>
           </div>
         </div>
@@ -720,9 +765,9 @@ export default function Dashboard() {
           </div>
 
           {/* Results Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="w-full grid-cols-1 lg:grid-cols-3 gap-6 flex">
             {/* Results List */}
-            <div className="lg:col-span-1">
+            {/* <div className="lg:col-span-1">
               <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur h-full">
                 <div className="p-6">
                   <h3 className="text-lg font-bold mb-4">
@@ -768,10 +813,10 @@ export default function Dashboard() {
                   )}
                 </div>
               </Card>
-            </div>
+            </div> */}
 
             {/* Detail View */}
-            <div className="lg:col-span-2">
+            {/* <div className="lg:col-span-2">
               {selectedItem ? (
                 <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur">
                   <div className="p-6">
@@ -790,7 +835,6 @@ export default function Dashboard() {
                     </div>
 
                     <div className="space-y-4">
-                      {/* 发票号 */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -801,7 +845,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Issuer Company */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <Building2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -814,7 +857,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Recipient Company */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <Building2 className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -827,7 +869,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Invoice Date */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -838,7 +879,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Product Info */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -856,7 +896,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Quantity */}
                       <div className="flex items-start gap-4 pb-4 border-b border-slate-700/50">
                         <FileText className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -867,7 +906,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* 总金额 */}
                       <div className="flex items-start gap-4 bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
                         <JapaneseYen className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
                         <div>
@@ -881,17 +919,10 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-3 mt-8 pt-6 border-t border-slate-700/50">
                       <Button className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold">
                         下载
                       </Button>
-                      {/* <Button
-                        variant="outline"
-                        className="flex-1 bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-700/50"
-                      >
-                        打印
-                      </Button> */}
                     </div>
                   </div>
                 </Card>
@@ -905,6 +936,118 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </Card>
+              )}
+            </div> */}
+
+            {/* Detail View */}
+            <div className="w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+              {/* 发票表格 */}
+              <table className="w-full text-sm text-left text-slate-700 dark:text-slate-200">
+                <thead className="w-full text-xs uppercase bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 rounded-tl-lg">
+                      发票号
+                    </th>
+                    <th scope="col" className="px-4 py-3">
+                      开票公司
+                    </th>
+                    <th scope="col" className="px-4 py-3">
+                      收票公司
+                    </th>
+                    <th scope="col" className="px-4 py-3">
+                      开票时间
+                    </th>
+                    <th scope="col" className="px-4 py-3">
+                      产品名称
+                    </th>
+                    {/* <th scope="col" className="px-4 py-3">
+                      规格
+                    </th>
+                    <th scope="col" className="px-4 py-3">
+                      数量
+                    </th> */}
+                    <th scope="col" className="px-4 py-3 rounded-tr-lg">
+                      含税总价(元)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentData.length > 0 ? (
+                    currentData.map((item, index) => (
+                      <tr
+                        key={index}
+                        className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <td className="px-4 py-3 font-medium">{item.发票号}</td>
+                        <td className="px-4 py-3 max-w-[200px] break-words">
+                          {item.开票公司}
+                        </td>
+                        <td className="px-4 py-3 max-w-[200px] break-words">
+                          {item.收票公司}
+                        </td>
+                        <td className="px-4 py-3">{item.时间}</td>
+                        <td className="px-4 py-3 max-w-[250px] break-words">
+                          {item.产品名称}
+                        </td>
+                        {/* <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                          {item.默认规格 ?? "-"}
+                        </td>
+                        <td className="px-4 py-3">{item.数量}</td> */}
+                        <td className="px-4 py-3 font-semibold text-cyan-600 dark:text-cyan-400">
+                          {item.含税总价.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="px-4 py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-b-lg"
+                      >
+                        暂无发票数据
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* 分页控件 */}
+              {totalPages > 0 && (
+                <div className="flex items-center justify-center gap-2 py-4 bg-slate-50 dark:bg-slate-800 rounded-b-lg">
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-900 transition-colors"
+                  >
+                    首页
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-900 transition-colors"
+                  >
+                    上一页
+                  </button>
+
+                  <span className="text-sm text-slate-600 dark:text-slate-300 px-2">
+                    第 {currentPage} 页 / 共 {totalPages} 页
+                  </span>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-900 transition-colors"
+                  >
+                    下一页
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-md text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-slate-900 transition-colors"
+                  >
+                    尾页
+                  </button>
+                </div>
               )}
             </div>
           </div>
