@@ -77,7 +77,7 @@ export default function Login() {
       }}
     >
       {/* Animated gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-transparent to-slate-900/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-slate-900/40 via-transparent to-slate-900/40 pointer-events-none" />
 
       <div className="w-full max-w-md px-4 relative z-10">
         {/* Card with glassmorphism effect */}
@@ -168,7 +168,7 @@ export default function Login() {
               </div>
 
               {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between text-sm">
+              {/* <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <input
                     type="checkbox"
@@ -184,7 +184,7 @@ export default function Login() {
                 >
                   忘记密码?
                 </a>
-              </div>
+              </div> */}
 
               {/* Submit Button */}
               <Button

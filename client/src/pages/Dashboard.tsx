@@ -327,7 +327,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = () => {
-    toast.success("Logged out successfully");
+    toast.success("成功退出");
     setTimeout(() => {
       setLocation("/");
     }, 1000);
@@ -422,19 +422,19 @@ export default function Dashboard() {
               ) : (
                 <Download className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">上传表格</span>
+              <span className="hidden sm:inline">下载表格</span>
             </Button>
             <Button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed transition-colors"
             >
               {isUploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">下载表格</span>
+              <span className="hidden sm:inline">上传表格</span>
             </Button>
             <Button
               onClick={handleLogout}
@@ -548,7 +548,8 @@ export default function Dashboard() {
               <Button
                 type="button"
                 onClick={() => setShowFilters(!showFilters)}
-                className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2"
+                // className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2"
+                className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600 font-semibold px-6 h-12 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Filter className="w-4 h-4" />
                 <span className="hidden sm:inline">筛选</span>
