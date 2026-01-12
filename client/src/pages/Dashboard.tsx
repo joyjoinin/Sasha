@@ -9,14 +9,12 @@ import {
   AlertCircle,
   FileText,
   Building2,
-  DollarSign,
-  TrendingUp,
   Filter,
   X,
   JapaneseYen,
-  JapaneseYenIcon,
+  Upload,
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
@@ -64,13 +62,23 @@ export default function Dashboard() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
 
+  // File upload state
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Category filter states
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [selectedBillingCompany, setSelectedBillingCompany] =
+    useState<string>("");
+  const [selectedInvoiceCompany, setSelectedInvoiceCompany] =
+    useState<string>("");
+  const [showCompanyList, setShowCompanyList] = useState(false);
+
   // Load invoice data from JSON file
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.BASE_URL}invoice_data.json`
-        );
+        const response = await fetch("/invoice_data.json");
         const data = await response.json();
         setInvoiceData(data);
         setIsLoading(false);
@@ -86,7 +94,28 @@ export default function Dashboard() {
 
   // Get unique companies for filter dropdown
   const uniqueCompanies = useMemo(() => {
-    return Array.from(new Set(invoiceData.map(item => item.开票公司))).sort();
+    return Array.from(
+      new Set(invoiceData.map(item => item.开票公司).filter(Boolean))
+    ).sort();
+  }, [invoiceData]);
+
+  // Get unique categories for filters
+  const uniqueProducts = useMemo(() => {
+    return Array.from(
+      new Set(invoiceData.map(item => item.产品名称).filter(Boolean))
+    ).sort();
+  }, [invoiceData]);
+
+  const uniqueBillingCompanies = useMemo(() => {
+    return Array.from(
+      new Set(invoiceData.map(item => item.收票公司).filter(Boolean))
+    ).sort();
+  }, [invoiceData]);
+
+  const uniqueInvoiceCompanies = useMemo(() => {
+    return Array.from(
+      new Set(invoiceData.map(item => item.开票公司).filter(Boolean))
+    ).sort();
   }, [invoiceData]);
 
   // Filter data based on all criteria
@@ -104,7 +133,18 @@ export default function Dashboard() {
       }
 
       // Company filter
-      if (selectedCompany && item.开票公司 !== selectedCompany) {
+      // if (selectedCompany && item.开票公司 !== selectedCompany) {
+      //   return false;
+      // }
+
+      // Category filters
+      if (selectedProduct && item.产品名称 !== selectedProduct) {
+        return false;
+      }
+      if (selectedBillingCompany && item.收票公司 !== selectedBillingCompany) {
+        return false;
+      }
+      if (selectedInvoiceCompany && item.开票公司 !== selectedInvoiceCompany) {
         return false;
       }
 
@@ -133,7 +173,16 @@ export default function Dashboard() {
 
       return true;
     });
-  }, [searchKeyword, invoiceData, selectedCompany, dateRange, priceRange]);
+  }, [
+    searchKeyword,
+    invoiceData,
+    selectedCompany,
+    selectedProduct,
+    selectedBillingCompany,
+    selectedInvoiceCompany,
+    dateRange,
+    priceRange,
+  ]);
 
   // Calculate aggregation statistics
   const stats: AggregationStats = useMemo(() => {
@@ -178,6 +227,55 @@ export default function Dashboard() {
       companyCount: companies.size,
       productCount: products.size,
     };
+  }, [filteredData]);
+
+  // Handle Excel file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // setIsUploading(true);
+    // const reader = new FileReader();
+
+    // reader.onload = event => {
+    //   try {
+    //     const data = event.target?.result;
+    //     const workbook = XLSX.read(data, { type: "binary" });
+    //     const sheetName = workbook.SheetNames[0];
+    //     const worksheet = workbook.Sheets[sheetName];
+    //     const jsonData = XLSX.utils.sheet_to_json(worksheet) as InvoiceData[];
+
+    //     if (jsonData.length === 0) {
+    //       toast.error("Excel file is empty");
+    //       setIsUploading(false);
+    //       return;
+    //     }
+
+    //     setInvoiceData(jsonData);
+    //     setHasSearched(true); // Automatically show data after upload
+    //     setSearchKeyword("");
+    //     setSelectedItem(null);
+    //     toast.success(`Loaded ${jsonData.length} invoices from Excel file`);
+    //     setIsUploading(false);
+    //   } catch (error) {
+    //     console.error("Error parsing Excel file:", error);
+    //     toast.error("Failed to parse Excel file");
+    //     setIsUploading(false);
+    //   }
+    // };
+
+    // reader.readAsBinaryString(file);
+    // if (fileInputRef.current) {
+    //   fileInputRef.current.value = "";
+    // }
+  };
+
+  // Get unique companies from filtered data
+  const uniqueFilteredCompanies = useMemo(() => {
+    const companies = new Set(
+      filteredData.map(item => item.开票公司).filter(Boolean)
+    );
+    return Array.from(companies).sort();
   }, [filteredData]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -232,6 +330,9 @@ export default function Dashboard() {
     setPriceRange({ min: "", max: "" });
     setSearchKeyword("");
     setSelectedItem(null);
+    setSelectedProduct("");
+    setSelectedBillingCompany("");
+    setSelectedInvoiceCompany("");
   };
 
   const hasActiveFilters =
@@ -270,13 +371,34 @@ export default function Dashboard() {
             </h1>
           </div>
 
-          <Button
-            onClick={handleLogout}
-            className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 flex items-center gap-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">退出</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">Upload Excel</span>
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -318,7 +440,11 @@ export default function Dashboard() {
               </div>
             </Card> */}
 
-            <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6">
+            <Card
+              className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6 cursor-pointer hover:bg-slate-800/70 transition-all"
+              onClick={() => setShowCompanyList(true)}
+            >
+              {" "}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-slate-500 text-sm mb-1">公司数量</p>
@@ -389,7 +515,7 @@ export default function Dashboard() {
               <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur p-6 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Company Filter */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       公司
                     </label>
@@ -405,6 +531,126 @@ export default function Dashboard() {
                         </option>
                       ))}
                     </select>
+                  </div> */}
+
+                  {/* Billing Company Filter */}
+                  {/* <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      收票公司
+                    </label>
+                    <select
+                      value={selectedBillingCompany}
+                      onChange={e => setSelectedBillingCompany(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                    >
+                      <option value="">所有收票</option>
+                      {uniqueBillingCompanies.map(company => (
+                        <option key={company} value={company}>
+                          {company}
+                        </option>
+                      ))}
+                    </select>
+                  </div> */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      收票公司
+                    </label>
+                    <input
+                      list="billing-companies"
+                      value={selectedBillingCompany}
+                      onChange={e => setSelectedBillingCompany(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                      placeholder="搜索或输入开票公司..."
+                    />
+                    <datalist id="billing-companies">
+                      <option value="">所有公司</option>
+                      {uniqueBillingCompanies.map(company => (
+                        <option key={company} value={company}>
+                          {company}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {/* Invoice Company Filter */}
+                  {/* <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      开票公司
+                    </label>
+                    <select
+                      value={selectedInvoiceCompany}
+                      onChange={e => setSelectedInvoiceCompany(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                    >
+                      <option value="">所有发票</option>
+                      {uniqueInvoiceCompanies.map(company => (
+                        <option key={company} value={company}>
+                          {company}
+                        </option>
+                      ))}
+                    </select>
+                  </div> */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      开票公司
+                    </label>
+                    <input
+                      list="invoice-companies"
+                      value={selectedInvoiceCompany}
+                      onChange={e => setSelectedInvoiceCompany(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                      placeholder="搜索或输入开票公司..."
+                    />
+                    <datalist id="invoice-companies">
+                      <option value="">所有公司</option>
+                      {uniqueInvoiceCompanies.map(company => (
+                        <option key={company} value={company}>
+                          {company}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
+
+                  {/* Product Filter */}
+                  {/* <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      产品名称
+                    </label>
+                    <select
+                      value={selectedProduct}
+                      onChange={e => setSelectedProduct(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                    >
+                      <option value="">所有产品</option>
+                      {uniqueProducts.map(product => (
+                        <option key={product} value={product}>
+                          {product}
+                        </option>
+                      ))}
+                    </select>
+                  </div> */}
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      产品名称
+                    </label>
+                    <input
+                      list="products"
+                      value={selectedProduct}
+                      onChange={e => setSelectedProduct(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700 text-white rounded-lg focus:border-cyan-500 focus:ring-cyan-500/20 transition-all"
+                      placeholder="搜索或输入开票公司..."
+                    />
+                    <datalist id="products">
+                      <option value="">所有产品</option>
+                      {uniqueProducts.map(product => (
+                        <option key={product} value={product}>
+                          {product}
+                        </option>
+                      ))}
+                    </datalist>
                   </div>
 
                   {/* Date Range - Start */}
@@ -664,6 +910,44 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Company List Modal */}
+      {showCompanyList && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="bg-slate-800 border-slate-700 w-full max-w-2xl max-h-96 overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <h3
+                className="text-xl font-bold"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                公司数量 ({uniqueFilteredCompanies.length})
+              </h3>
+              <Button
+                onClick={() => setShowCompanyList(false)}
+                className="bg-slate-700 hover:bg-slate-600 text-white p-2 h-auto"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-6">
+              {uniqueFilteredCompanies.length === 0 ? (
+                <p className="text-slate-400 text-center py-8">未找到公司</p>
+              ) : (
+                <div className="space-y-2">
+                  {uniqueFilteredCompanies.map(company => (
+                    <div
+                      key={company}
+                      className="p-3 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-200 hover:bg-slate-700 transition-all"
+                    >
+                      {company}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,6 +34,7 @@ export default defineConfig({
       ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "dispersedly-subcancellate-camron.ngrok-free.dev",
     ],
     fs: {
       strict: true,
