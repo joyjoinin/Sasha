@@ -57,7 +57,7 @@ export default function Login() {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      toast.success("Login successful! Redirecting...");
+      toast.success("登陆成功，跳转中...");
       // Redirect to dashboard
       setTimeout(() => {
         setLocation("/dashboard");

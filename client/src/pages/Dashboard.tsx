@@ -83,8 +83,6 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // const response = await fetch("/invoice_data.json");
-        // const data = await response.json();
         const response = await axios.get(`http://localhost:5000/all_invoices`, {
           responseType: "json",
         });
@@ -308,6 +306,22 @@ export default function Dashboard() {
     return Array.from(companies).sort();
   }, [filteredData]);
 
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await axios.get(`http://localhost:5000/download`, {
+        responseType: "json",
+      });
+      const data = response.data;
+      console.log(data.msg);
+      setIsDownloading(false);
+    } catch (error) {
+      console.error("Error download invoice data:", error);
+      toast.error("Failed to download invoice data");
+      setIsDownloading(false);
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchKeyword.trim()) {
@@ -413,8 +427,8 @@ export default function Dashboard() {
               className="hidden"
             />
             <Button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isDownloading}
+              onClick={() => handleDownload()}
+              disabled={isDownloading || currentData?.length === 0}
               className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
             >
               {isDownloading ? (
@@ -422,7 +436,9 @@ export default function Dashboard() {
               ) : (
                 <Download className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">下载表格</span>
+              <span className="hidden sm:inline">
+                {isDownloading ? "下载中..." : "下载表格"}
+              </span>
             </Button>
             <Button
               onClick={() => fileInputRef.current?.click()}
