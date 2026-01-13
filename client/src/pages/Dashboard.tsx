@@ -308,16 +308,82 @@ export default function Dashboard() {
 
   const handleDownload = async () => {
     setIsDownloading(true);
+    const filters = {
+      receive_company: selectedBillingCompany,
+      issue_company: selectedInvoiceCompany,
+      start_date: dateRange.start,
+      end_date: dateRange.end,
+      product_name: selectedProduct,
+    };
     try {
-      const response = await axios.get(`http://localhost:5000/download`, {
-        responseType: "json",
+      // 1. 构建查询参数（空值不传入）
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value.trim()) {
+          // 只传非空参数
+          params.append(key, value.trim());
+        }
       });
-      const data = response.data;
-      console.log(data.msg);
+
+      // 2. 替换为axios.get请求（核心修改）
+      // 注意：如果download接口是下载文件，需加responseType；如果是获取数据，无需加
+      const response = await axios.get(
+        `http://localhost:5000/download`, // 你的目标接口地址
+        {
+          params: Object.fromEntries(params), // axios自动拼接参数到URL
+          // 如果是下载文件，需添加以下配置（关键！）
+          responseType: "blob",
+          headers: {
+            "Content-Type": "application/json",
+            // 如需认证，添加token：
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+        }
+      );
+
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "发票数据.csv";
+      if (contentDisposition) {
+        // 解析后端返回的文件名
+        const filenameMatch = contentDisposition.match(
+          /filename\*=utf-8''(.*)/
+        );
+        if (filenameMatch && filenameMatch[1]) {
+          filename = decodeURIComponent(filenameMatch[1]);
+        }
+      }
+
+      // 创建临时URL和下载链接
+      const blob = new Blob([response.data], {
+        type: "text/csv; charset=utf-8",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename; // 指定下载文件名
+      document.body.appendChild(a);
+      a.click();
+
+      // 清理临时资源（避免内存泄漏）
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      alert("CSV文件下载成功！");
       setIsDownloading(false);
     } catch (error) {
-      console.error("Error download invoice data:", error);
-      toast.error("Failed to download invoice data");
+      // 4. axios异常处理（比fetch更友好）
+      console.error("请求失败：", error);
+      if (error) {
+        // 服务器返回错误（4xx/5xx）
+        alert(`请求失败：${error} "}`);
+      } else if (error) {
+        // 请求已发送但无响应
+        alert("请求失败：无法连接到服务器，请检查接口地址");
+      } else {
+        // 请求配置错误
+        alert(`请求失败：${error}`);
+      }
+    } finally {
       setIsDownloading(false);
     }
   };
