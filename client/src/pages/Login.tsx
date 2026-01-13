@@ -4,8 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import request from "@/utils/request";
+import { setToken } from "@/utils/auth";
 
 /**
  * Modern Minimalist Login Page
@@ -17,7 +19,7 @@ import { toast } from "sonner";
  */
 
 export default function Login() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -48,23 +50,34 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // 调用后端登录接口
+      console.log(email, password);
+      const res = await request.post("/login", { email, password });
+      if (res.code === 200) {
+        // 存储Token和有效期
+        setToken(res.data.access_token, res.data.expires_in);
+        // 提示并跳转仪表盘
+        toast.success("登录成功，跳转中...");
+        setTimeout(() => {
+          // 跳转仪表盘
+        }, 500);
+        // 重置表单
+        setEmail("");
+        setPassword("");
+      } else {
+        toast.error(res.msg || "登录失败");
+      }
+    } catch (error: any) {
+      // 处理后端返回的错误（如账号密码错误）
+      const errorMsg = error.response?.data?.msg || "网络错误，请重试";
+      toast.error(errorMsg);
+    } finally {
       setIsLoading(false);
-      toast.success("登陆成功，跳转中...");
-      // Redirect to dashboard
-      setTimeout(() => {
-        setLocation("/dashboard");
-      }, 500);
-      setEmail("");
-      setPassword("");
-    }, 1500);
+    }
   };
 
   return (

@@ -4,9 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   Search,
   LogOut,
-  ChevronRight,
   Loader2,
-  AlertCircle,
   FileText,
   Building2,
   Filter,
@@ -19,6 +17,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import axios from "axios";
+import requestWithType from "@/utils/request";
 /**
  * Dashboard - Invoice Data Search, Aggregation and Filtering Page
  * Design Philosophy: Modern Minimalist with Glassmorphism
@@ -87,10 +86,8 @@ export default function Dashboard() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/all_invoices`, {
-          responseType: "json",
-        });
-        const data = response.data.data;
+        const res = await requestWithType.get("/all_invoices");
+        const data = res.data;
         setInvoiceData(data);
         setIsLoading(false);
       } catch (error) {
@@ -99,7 +96,6 @@ export default function Dashboard() {
         setIsLoading(false);
       }
     };
-
     loadData();
   }, []);
 
