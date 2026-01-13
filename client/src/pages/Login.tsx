@@ -166,27 +166,6 @@ export default function Login() {
                   <p className="text-red-400 text-xs mt-1">{errors.password}</p>
                 )}
               </div>
-
-              {/* Remember Me & Forgot Password */}
-              {/* <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded bg-slate-800 border-slate-700 accent-cyan-500 cursor-pointer"
-                  />
-                  <span className="text-slate-400 group-hover:text-slate-300 transition-colors">
-                    记住我
-                  </span>
-                </label>
-                <a
-                  href="#"
-                  className="text-cyan-500 hover:text-cyan-400 transition-colors font-medium"
-                >
-                  忘记密码?
-                </a>
-              </div> */}
-
-              {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={isLoading}

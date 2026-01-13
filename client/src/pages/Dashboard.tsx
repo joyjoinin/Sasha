@@ -48,7 +48,6 @@ interface AggregationStats {
   companyCount: number;
   productCount: number;
 }
-
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -64,12 +63,17 @@ export default function Dashboard() {
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
 
   // File upload state
-  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // 暂存选中的文件
+  const [fileError, setFileError] = useState(""); // 文件校验错误提示
+
+  // 2. 按钮状态（你已有的状态，确保存在）
+  const [isUploading, setIsUploading] = useState(false); // 上传中状态
+
+  // 3. 绑定隐藏的文件输入框（你已定义的 ref）
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // File download state
   const [isDownloading, setIsDownloading] = useState(false);
-  const filedownloadRef = useRef<HTMLInputElement>(null);
 
   // Category filter states
   const [selectedProduct, setSelectedProduct] = useState<string>("");
@@ -258,44 +262,108 @@ export default function Dashboard() {
   }, [filteredData]);
 
   // Handle Excel file upload
+  // 处理文件选择（文件输入框 onChange 触发）
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 1. 获取用户选择的文件（只取第一个文件）
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setSelectedFile(null);
+      setFileError("");
+      return;
+    }
 
-    // setIsUploading(true);
-    // const reader = new FileReader();
+    // 2. 清空之前的错误提示
+    setFileError("");
 
-    // reader.onload = event => {
-    //   try {
-    //     const data = event.target?.result;
-    //     const workbook = XLSX.read(data, { type: "binary" });
-    //     const sheetName = workbook.SheetNames[0];
-    //     const worksheet = workbook.Sheets[sheetName];
-    //     const jsonData = XLSX.utils.sheet_to_json(worksheet) as InvoiceData[];
+    // 3. 校验文件类型（仅允许 xlsx、xls、csv，与 input 的 accept 对应）
+    const allowedTypes = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // xlsx
+      "application/vnd.ms-excel", // xls
+      "text/csv", // csv
+    ];
+    const fileExtension = file.name.split(".").pop()?.toLowerCase(); // 从文件名获取后缀（兼容浏览器类型识别问题）
+    const isTypeValid =
+      allowedTypes.includes(file.type) ||
+      ["xlsx", "xls", "csv"].includes(fileExtension || "");
 
-    //     if (jsonData.length === 0) {
-    //       toast.error("Excel file is empty");
-    //       setIsUploading(false);
-    //       return;
-    //     }
+    if (!isTypeValid) {
+      setSelectedFile(null);
+      setFileError("请选择正确的文件类型（仅支持 .xlsx、.xls、.csv）");
+      return;
+    }
 
-    //     setInvoiceData(jsonData);
-    //     setHasSearched(true); // Automatically show data after upload
-    //     setSearchKeyword("");
-    //     setSelectedItem(null);
-    //     toast.success(`Loaded ${jsonData.length} invoices from Excel file`);
-    //     setIsUploading(false);
-    //   } catch (error) {
-    //     console.error("Error parsing Excel file:", error);
-    //     toast.error("Failed to parse Excel file");
-    //     setIsUploading(false);
-    //   }
-    // };
+    // 4. 校验文件大小（示例：限制 10MB 以内，可根据需求调整）
+    const maxSize = 10 * 1024 * 1024; // 10MB（单位：字节）
+    if (file.size > maxSize) {
+      setSelectedFile(null);
+      setFileError(`文件大小不能超过 ${maxSize / 1024 / 1024}MB`);
+      return;
+    }
 
-    // reader.readAsBinaryString(file);
-    // if (fileInputRef.current) {
-    //   fileInputRef.current.value = "";
-    // }
+    // 5. 校验通过，暂存文件到状态
+    setSelectedFile(file);
+    setFileError("");
+    alert("文件选择成功");
+    console.log("文件选择成功：", file.name);
+  };
+
+  // 触发文件上传（上传按钮 onClick 触发）
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setFileError("请先选择要上传的文件");
+      fileInputRef.current?.click(); // 自动触发文件选择
+      return;
+    }
+    if (isUploading) return;
+
+    try {
+      setIsUploading(true);
+      setFileError("");
+
+      const formData = new FormData();
+      formData.append("excelFile", selectedFile);
+
+      const response = await axios.post(
+        "http://localhost:5000/upload-excel",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 30000,
+        }
+      );
+
+      // 成功逻辑（不变）
+      if (response.data.code === 200) {
+        alert(`上传成功！共导入 ${response.data.data.new_added} 条数据`);
+        setSelectedFile(null); // 重置文件状态
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 重置输入框
+        // 可选：刷新数据列表
+        // fetchCurrentData();
+      } else {
+        // 后端业务错误（如表头缺失）：也要重置状态
+        setFileError(`上传失败：${response.data.msg || "未知错误"}`);
+        setSelectedFile(null); // 修复1：重置文件状态
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 修复2：重置输入框
+      }
+    } catch (error: any) {
+      // 网络错误/异常：强制重置状态
+      console.error("上传异常：", error);
+      let errorMsg = "上传失败：未知错误";
+      if (error.response) {
+        errorMsg = `上传失败：${error.response.status} - ${error.response.data?.msg || "服务器错误"}`;
+      } else if (error.request) {
+        errorMsg = "上传失败：无法连接到服务器，请检查网络";
+      } else {
+        errorMsg = `上传失败：${error.message}`;
+      }
+      setFileError(errorMsg);
+      // 修复3：失败后重置文件状态和输入框
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } finally {
+      // 修复4：无论成功/失败，都重置上传状态（避免按钮一直禁用）
+      setIsUploading(false);
+    }
   };
 
   // Get unique companies from filtered data
@@ -413,20 +481,6 @@ export default function Dashboard() {
     }, 1000);
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString("zh-CN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
-
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined || isNaN(value)) {
       return "¥0.00";
@@ -493,7 +547,7 @@ export default function Dashboard() {
               className="hidden"
             />
             <Button
-              onClick={() => handleDownload()}
+              onClick={handleDownload}
               disabled={isDownloading || currentData?.length === 0}
               className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30 flex items-center gap-2"
             >
@@ -507,7 +561,7 @@ export default function Dashboard() {
               </span>
             </Button>
             <Button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => handleUpload()}
               disabled={isUploading}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 border border-violet-500/30 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed transition-colors"
             >
@@ -516,7 +570,13 @@ export default function Dashboard() {
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              <span className="hidden sm:inline">上传表格</span>
+              {isUploading ? (
+                <span className="hidden sm:inline">上传中...</span>
+              ) : selectedFile ? (
+                <span className="hidden sm:inline">点击上传</span>
+              ) : (
+                <span className="hidden sm:inline">上传表格</span>
+              )}
             </Button>
             <Button
               onClick={handleLogout}
